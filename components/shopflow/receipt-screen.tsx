@@ -1,0 +1,17 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Loader2, Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { api, ApiSale } from "@/lib/shopflow-api";
+import { ShopScreen } from "./screen-state";
+
+const money = (value: string | number) => Number(value).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+export function ReceiptScreen({ saleId }: { saleId: string }) {
+  const [sale, setSale] = useState<ApiSale | null>(null); const [error, setError] = useState("");
+  useEffect(() => { api<ApiSale>(`/sales/${saleId}`).then(setSale).catch((cause) => setError(cause instanceof Error ? cause.message : "โหลดใบเสร็จไม่สำเร็จ")); }, [saleId]);
+  return <ShopScreen><section><div className="mb-4 flex items-center justify-between print:hidden"><Button asChild variant="outline"><Link href="/sales"><ArrowLeft/>กลับรายการขาย</Link></Button><Button onClick={() => window.print()} className="bg-orange-600 hover:bg-orange-700"><Printer/>พิมพ์ใบเสร็จ</Button></div>
+    {!sale && !error && <div className="grid h-96 place-items-center"><Loader2 className="animate-spin text-orange-500"/></div>}{error && <p className="py-20 text-center text-red-600">{error}</p>}{sale && <article className="mx-auto w-full max-w-[420px] bg-white p-7 font-mono text-sm shadow-sm print:max-w-none print:p-0 print:shadow-none"><header className="border-b border-dashed pb-5 text-center"><strong className="text-xl">SHOPFLOW</strong><p className="mt-1 font-sans text-xs text-slate-500">ใบเสร็จรับเงิน / TAX INVOICE (ABB.)</p></header><div className="space-y-1 border-b border-dashed py-4 text-xs"><p>เลขที่: {sale.receiptNo}</p><p>วันที่: {new Date(sale.soldAt).toLocaleString("th-TH")}</p><p>พนักงาน: {sale.cashier ? `${sale.cashier.firstName} ${sale.cashier.lastName}` : "—"}</p></div><div className="space-y-3 border-b border-dashed py-4">{sale.items.map((item) => <div key={item.id}><div className="flex justify-between gap-4"><span className="font-sans">{item.product?.name ?? item.productId}</span><strong>{money(item.subtotal)}</strong></div><p className="text-xs text-slate-500">{item.quantity} × {money(item.unitPrice)}</p></div>)}</div><div className="space-y-2 border-b border-dashed py-4"><div className="flex justify-between"><span>รวม</span><span>{money(sale.subtotal)}</span></div><div className="flex justify-between"><span>ส่วนลด</span><span>{money(sale.discount)}</span></div><div className="flex justify-between text-lg font-bold"><span>สุทธิ</span><span>฿{money(sale.total)}</span></div></div>{sale.payments.map((payment) => <div key={payment.id} className="space-y-1 border-b border-dashed py-4"><div className="flex justify-between"><span>{payment.method === "QR_CODE" ? "PromptPay QR" : "เงินสด"}</span><span>{money(payment.amount)}</span></div>{payment.receivedAmount && <div className="flex justify-between"><span>รับเงิน</span><span>{money(payment.receivedAmount)}</span></div>}{payment.changeAmount && <div className="flex justify-between font-bold"><span>เงินทอน</span><span>{money(payment.changeAmount)}</span></div>}{payment.referenceNo && <p className="text-xs">อ้างอิง: {payment.referenceNo}</p>}</div>)}<footer className="pt-5 text-center font-sans"><p className="font-bold">ขอบคุณที่ใช้บริการ</p><p className="mt-1 text-xs text-slate-500">เก็บใบเสร็จไว้เป็นหลักฐาน</p></footer></article>}
+  </section></ShopScreen>;
+}

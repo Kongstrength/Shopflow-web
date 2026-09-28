@@ -23,6 +23,23 @@ export type ShopContext = {
   user: { id: string; firstName: string; lastName: string };
 };
 
+export type ApiPayment = { id: string; method: "CASH" | "QR_CODE" | "CARD" | "TRANSFER"; amount: string; receivedAmount: string | null; changeAmount: string | null; referenceNo: string | null; status: "PAID" | "REFUNDED"; paidAt: string };
+export type ApiSale = {
+  id: string; receiptNo: string; status: "COMPLETED" | "CANCELLED"; subtotal: string; discount: string; total: string; soldAt: string;
+  cashier?: { firstName: string; lastName: string };
+  items: { id: string; productId: string; quantity: number; unitPrice: string; unitCost: string; subtotal: string; product?: { name: string; sku: string } }[];
+  payments: ApiPayment[];
+};
+
+export type DashboardSummary = {
+  today: { revenue: number; grossProfit: number; orders: number; items: number };
+  lowStock: { id: string; name: string; sku: string; reorderLevel: number; quantity: number }[];
+  topProducts: { id: string; name: string; sku: string; quantity: number; revenue: number }[];
+  hourlySales: { hour: number; sales: number; orders: number }[];
+  paymentBreakdown: Record<"CASH" | "QR_CODE" | "CARD" | "TRANSFER", number>;
+  recentSales: ApiSale[];
+};
+
 type ApiError = { message?: string | string[] };
 
 export async function api<T>(path: string, init?: RequestInit, userId?: string): Promise<T> {

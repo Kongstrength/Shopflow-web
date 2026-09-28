@@ -42,7 +42,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => { void Promise.resolve().then(refresh); }, [refresh]);
 
   const value = useMemo(() => ({ products, context, loading, error, refresh }), [products, context, loading, error, refresh]);
   return <ShopStateContext.Provider value={value}>{children}</ShopStateContext.Provider>;
